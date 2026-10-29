@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroControl - Órdenes de Trabajo y Campañas</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind Config para colores Agro personalizados -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            agro: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Font Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+      .no-print, .print-hide-unselected {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      body {
+        background-color: white !important;
+        color: black !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+      }
+      main {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+      }
+      .print-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+      }
+      .print-grid-compact {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+      .card-shadow {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        margin-bottom: 0px !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .print-break-inside-avoid {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .print-full-width {
+        width: 100% !important;
+        grid-column: span 3 / span 3 !important;
+      }
+      table {
+        width: 100% !important;
+      }
+      th, td {
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- HEADER / NAVBAR -->
+  <header class="bg-agro-900 text-white shadow-lg no-print sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="bg-emerald-500 p-2 rounded-xl text-agro-900 shadow-md">
+          <i data-lucide="sprout" class="w-6 h-6 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight tracking-wide">AgroControl OT</h1>
+          <p class="text-xs text-emerald-300">Gestión de Campo y Campañas Agrícolas</p>
+        </div>
+      </div>
+
+      <!-- BOTONES ACCIONES PRINCIPALES HEADER -->
+      <div class="flex items-center space-x-2 flex-wrap">
+        <!-- BADGE GITHUB CONECTADO -->
+        <div id="github-status-badge" onclick="openGithubModal()" class="bg-emerald-950/80 hover:bg-emerald-950 border border-emerald-600/60 rounded-lg px-2.5 py-1 flex items-center gap-2 cursor-pointer transition shadow-xs" title="Estado de conexión GitHub">
+          <div class="relative flex items-center justify-center">
+            <img id="gh-avatar" src="https://github.com/github.png" class="w-5 h-5 rounded-full border border-emerald-400" alt="GitHub Avatar">
+            <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse border border-emerald-900"></span>
+          </div>
+          <div class="text-left text-[11px] leading-none hidden sm:block">
+            <p id="gh-user-name" class="font-bold text-white">@agro-team</p>
+            <p class="text-[9px] text-emerald-300 font-medium">GitHub Conectado</p>
+          </div>
+        </div>
+
+        <!-- BOTÓN MULTIUSUARIO GITHUB -->
+        <button onclick="openGithubModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs sm:text-sm flex items-center gap-1.5 transition shadow-sm active:scale-95" title="Configurar y sincronizar multiusuario con GitHub">
+          <i data-lucide="git-branch" class="w-4 h-4 text-emerald-400"></i>
+          <span class="hidden md:inline">Multiusuario GitHub</span>
+        </button>
+
+        <!-- BOTON GUARDAR CAMBIOS -->
+        <button onclick="manualSaveAll()" class="bg-emerald-800 hover:bg-emerald-700 border border-emerald-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs sm:text-sm flex items-center gap-1.5 transition shadow-sm active:scale-95" title="Guardar todos los cambios en el navegador">
+          <i data-lucide="save" class="w-4 h-4 text-emerald-300"></i>
+          <span class="hidden sm:inline">Guardar</span>
+        </button>
+
+        <button id="btn-open-modal" onclick="openOtModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-1.5 rounded-lg text-xs sm:text-sm flex items-center gap-1.5 transition shadow-sm active:scale-95">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Nueva OT</span>
+        </button>
+
+        <!-- BOTÓN DE IMPRESIÓN REPORTE DE TILDADOS -->
+        <button id="btn-print-main" onclick="window.print()" class="bg-amber-600 hover:bg-amber-500 text-white font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm flex items-center gap-1.5 transition shadow-sm active:scale-95" title="Imprimir reporte de OTs tildadas y su resumen">
+          <i data-lucide="printer" class="w-4 h-4 text-amber-200"></i>
+          <span>Imprimir Reporte</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full print-container">
+
+    <!-- ENCABEZADO DE IMPRESIÓN (SOLO PRINT) -->
+    <div class="hidden print-only mb-4 border-b pb-3 text-center">
+      <h1 class="text-2xl font-bold text-slate-900 uppercase tracking-wide">Reporte de Órdenes de Trabajo</h1>
+      <p class="text-sm text-slate-600 mt-1">
+        Campaña: <span id="print-campana" class="font-bold"></span> &nbsp;|&nbsp; 
+        Fecha de Emisión: <span id="print-date" class="font-bold"></span>
+      </p>
+    </div>
+
+    <!-- METRICAS / TARJETAS DE RESUMEN RÁPIDO (Calculadas dinámicamente según TILDADOS) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 no-print">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex items-center gap-3">
+        <div class="p-3 bg-emerald-50 text-emerald-700 rounded-lg">
+          <i data-lucide="check-square" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">OTs Tildadas</p>
+          <p id="stat-total-ots" class="text-xl font-bold text-slate-800">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex items-center gap-3">
+        <div class="p-3 bg-amber-50 text-amber-700 rounded-lg">
+          <i data-lucide="map" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">Superficie Seleccionada</p>
+          <p id="stat-total-ha" class="text-xl font-bold text-slate-800">0 ha</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex items-center gap-3">
+        <div class="p-3 bg-blue-50 text-blue-700 rounded-lg">
+          <i data-lucide="droplets" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">Insumos a Requerir</p>
+          <p id="stat-total-insumos" class="text-xl font-bold text-slate-800">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex items-center gap-3">
+        <div class="p-3 bg-emerald-800 text-emerald-100 rounded-lg">
+          <i data-lucide="trees" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">Campos Seleccionados</p>
+          <p id="stat-total-campos" class="text-xl font-bold text-slate-800">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENEDOR EN DOS COLUMNAS -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 print-grid-compact">
+
+      <!-- COLUMNA PRINCIPAL: TABLA DE PLANILLA OT (2 cols) -->
+      <div class="lg:col-span-2 space-y-6 print-full-width">
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden card-shadow">
+          
+          <!-- FILTRO EXCLUSIVO POR N° DE OT Y CAMPO -->
+          <div class="p-4 bg-slate-50 border-b border-slate-200 space-y-3 no-print">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="filter" class="w-5 h-5 text-emerald-700"></i>
+                <h2 class="font-bold text-slate-800 text-base">Filtro por N° de OT y Campo</h2>
+              </div>
+
+              <!-- SELECTOR DE CAMPAÑA -->
+              <div class="flex items-center bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs shadow-xs focus-within:ring-2 focus-within:ring-emerald-500">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-700 mr-1.5"></i>
+                <span class="text-slate-500 mr-1.5 font-medium hidden sm:inline">Campaña:</span>
+                <select id="filter-campana" onchange="renderApp()" class="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer">
+                  <option value="TODAS">Todas las Campañas</option>
+                  <option value="2026/2027" selected>2026/2027</option>
+                  <option value="2025/2026">2025/2026</option>
+                  <option value="2024/2025">2024/2025</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- BÚSQUEDA EXCLUSIVA POR N° DE OT Y CAMPO -->
+            <div class="flex flex-col sm:flex-row gap-2">
+              <div class="relative flex-1">
+                <input type="text" id="search-input" oninput="renderApp()" placeholder="Buscar por N° de OT o Campo (ej: 172, Pocilga)..." class="w-full pl-9 pr-8 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium placeholder:text-slate-400">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                <button onclick="clearSearch()" id="btn-clear-search" class="hidden absolute right-2.5 top-2 text-slate-400 hover:text-slate-600">
+                  <i data-lucide="x-circle" class="w-4 h-4"></i>
+                </button>
+              </div>
+
+              <!-- BOTÓN EXPORTAR CSV -->
+              <button onclick="exportToCSV()" class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm shrink-0">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>Exportar CSV</span>
+              </button>
+            </div>
+
+            <!-- BOTONES RÁPIDOS DE FILTRADO Y SELECCIÓN -->
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+              <div class="flex items-center gap-1.5">
+                <span class="font-medium mr-1">Filtros Rápidos:</span>
+                <button onclick="setSearchFilter('')" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded-full font-medium transition text-slate-700">Ver Todos</button>
+                <button onclick="setSearchFilter('172')" class="px-2 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-full font-medium transition">OT 172</button>
+                <button onclick="setSearchFilter('Pocilga')" class="px-2 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-full font-medium transition">Campo Pocilga</button>
+              </div>
+
+              <!-- BOTONES DE MARCAR / DESMARCAR TODOS -->
+              <div class="flex items-center gap-2">
+                <button onclick="selectAllVisible(true)" class="text-emerald-700 font-semibold hover:underline flex items-center gap-0.5">
+                  <i data-lucide="check-check" class="w-3.5 h-3.5"></i> Tildar todos
+                </button>
+                <span class="text-slate-300">|</span>
+                <button onclick="selectAllVisible(false)" class="text-slate-500 hover:text-slate-700 font-medium hover:underline">
+                  Destildar todos
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLA DE ORDENES DE TRABAJO -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                  <th class="py-2.5 px-2 text-center w-12">Camp.</th>
+                  <th class="py-2.5 px-3">OT</th>
+                  <th class="py-2.5 px-3">Campo</th>
+                  <th class="py-2.5 px-3">Lote</th>
+                  <th class="py-2.5 px-3">Cultivo / Labor</th>
+                  <th class="py-2.5 px-3 text-right">Sup. (ha)</th>
+                  <th class="py-2.5 px-3">Fecha</th>
+                  <th class="py-2.5 px-3">Insumo</th>
+                  <th class="py-2.5 px-3 text-right">Dosis</th>
+                  <th class="py-2.5 px-3">Uni.</th>
+                  <th class="py-2.5 px-3 text-right font-bold text-emerald-900">Cant. Total</th>
+                  <th class="py-2.5 px-3 text-center no-print">
+                    <span class="sr-only">Selección y Acciones</span>
+                    <span class="text-slate-600 font-bold">Marcar / Acción</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="ot-table-body" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Se llena mediante Javascript -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="empty-state" class="p-8 text-center hidden">
+            <i data-lucide="file-x" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+            <p class="text-sm text-slate-500 font-medium">No se encontraron Órdenes de Trabajo o Campos coincidentes.</p>
+            <p class="text-xs text-slate-400 mt-1">Prueba buscando por N° de OT (ej: 172) o nombre de Campo (ej: Pocilga).</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLUMNA DERECHA: RESUMEN CONSOLIDADO BASADO EN OT's TILDADAS -->
+      <div class="space-y-6 print-full-width">
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden card-shadow sticky top-20 print-break-inside-avoid">
+          <div class="p-4 bg-emerald-900 text-white flex flex-col gap-1">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="calculator" class="w-5 h-5 text-emerald-300"></i>
+                <h2 class="font-bold text-sm tracking-wide uppercase">Resumen de Insumos</h2>
+              </div>
+              <span id="badge-campana-resumen" class="text-[10px] bg-emerald-800 text-emerald-200 px-2 py-0.5 rounded-full uppercase font-medium">Campaña Actual</span>
+            </div>
+          </div>
+
+          <div class="p-4">
+            <p class="text-xs text-slate-500 mb-3 no-print">
+              Cálculo de requerimientos basado únicamente en las <strong class="text-emerald-800">OTs marcadas con tilde (✓)</strong>:
+            </p>
+
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                    <th class="py-2 px-3 font-semibold">INSUMOS</th>
+                    <th class="py-2 px-3 text-right font-semibold">Cantidad Total</th>
+                    <th class="py-2 px-3 font-semibold">Unidad</th>
+                  </tr>
+                </thead>
+                <tbody id="resumen-table-body" class="divide-y divide-slate-100">
+                  <!-- Se llena dinámicamente según lo TILDADO -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-4 p-3 bg-amber-50 border border-amber-200/60 rounded-lg flex items-start gap-2 text-amber-800 text-xs no-print">
+              <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+              <span>Marque o desmarque las casillas de verificación para definir las OTs que aparecerán en la impresión y en este resumen.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- DATALISTS DE AUTOCOMPLETADO -->
+  <datalist id="datalist-campos"></datalist>
+  <datalist id="datalist-cultivos"></datalist>
+  <datalist id="datalist-insumos"></datalist>
+
+  <!-- MODAL MULTIUSUARIO GITHUB -->
+  <div id="github-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+      
+      <!-- HEADER MODAL GITHUB -->
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-1.5 bg-slate-800 text-emerald-400 rounded-lg border border-slate-700">
+            <i data-lucide="github" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">Sincronización Multiusuario GitHub</h3>
+            <p class="text-xs text-slate-400">Comparta órdenes de trabajo en tiempo real con su equipo</p>
+          </div>
+        </div>
+        <button onclick="closeGithubModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- BODY MODAL GITHUB -->
+      <div class="p-5 space-y-4 text-xs">
+        <!-- ESTADO ACTUAL -->
+        <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <img id="gh-modal-avatar" src="https://github.com/github.png" class="w-10 h-10 rounded-full border-2 border-emerald-500" alt="Avatar">
+              <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></span>
+            </div>
+            <div>
+              <p id="gh-modal-username" class="font-bold text-slate-800 text-sm">@agro-team</p>
+              <p class="text-emerald-700 font-semibold text-[11px] flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Conectado y Sincronizado
+              </p>
+            </div>
+          </div>
+          <span id="gh-last-sync" class="text-[10px] text-slate-500 font-mono bg-white px-2 py-1 rounded border border-emerald-200">
+            Última sincr: Reciente
+          </span>
+        </div>
+
+        <!-- LISTA DE USUARIOS DEL EQUIPO -->
+        <div class="space-y-1.5">
+          <p class="font-semibold text-slate-700 text-[11px]">Usuarios Activos del Equipo</p>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+              <img src="https://github.com/torvalds.png" class="w-6 h-6 rounded-full" alt="User">
+              <div class="truncate">
+                <p class="font-bold text-slate-800 leading-tight truncate">Ing. Agrónomo</p>
+                <p class="text-[9px] text-slate-400">Editor</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
+              <img src="https://github.com/gaearon.png" class="w-6 h-6 rounded-full" alt="User">
+              <div class="truncate">
+                <p class="font-bold text-slate-800 leading-tight truncate">Encargado Campo</p>
+                <p class="text-[9px] text-slate-400">Operador</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORMULARIO DE CONFIGURACIÓN DE GITHUB -->
+        <form id="github-form" onsubmit="saveGithubSettings(event)" class="space-y-3 pt-1 border-t border-slate-100">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Usuario GitHub / Equipo *</label>
+            <input type="text" id="gh-input-user" required placeholder="ej: agro-user-equipo" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold text-slate-800">
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Repositorio de Sincronización *</label>
+            <input type="text" id="gh-input-repo" required placeholder="ej: agrocontrol-ots-campana" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono text-slate-800">
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Personal Access Token (PAT)</label>
+            <input type="password" id="gh-input-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono text-slate-800">
+            <p class="text-[10px] text-slate-400 mt-0.5">Utilizado para autorizar la sincronización multiusuario con el repositorio del equipo.</p>
+          </div>
+
+          <!-- BOTONES DE ACCIÓN GITHUB -->
+          <div class="pt-2 flex flex-col sm:flex-row gap-2 justify-between items-center border-t border-slate-100">
+            <button type="button" onclick="disconnectGithub()" class="w-full sm:w-auto px-3 py-1.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-lg transition flex items-center justify-center gap-1">
+              <i data-lucide="unlink" class="w-3.5 h-3.5"></i> Desconectar
+            </button>
+
+            <div class="flex gap-2 w-full sm:w-auto justify-end">
+              <button type="button" onclick="syncWithGithub()" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sincronizar Ahora
+              </button>
+              <button type="submit" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i> Guardar Config
+              </button>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PARA INGRESAR / EDITAR ORDEN DE TRABAJO -->
+  <div id="ot-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden no-print">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+      
+      <!-- HEADER MODAL -->
+      <div class="bg-agro-900 text-white px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-1.5 bg-emerald-500/20 text-emerald-300 rounded-lg">
+            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base" id="modal-title">Cargar Nueva Orden de Trabajo</h3>
+            <p class="text-xs text-emerald-300">Complete los datos del lote, campaña e insumos aplicados</p>
+          </div>
+        </div>
+        <button onclick="closeOtModal()" class="text-slate-300 hover:text-white p-1 rounded-lg hover:bg-white/10 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- BODY MODAL CON FORMULARIO -->
+      <form id="ot-form" onsubmit="saveOtForm(event)" class="p-5 overflow-y-auto space-y-4 text-xs">
+        
+        <!-- DATOS CABECERA DE LA OT -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Campaña Agrícola *</label>
+            <select id="form-campana" required class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold text-slate-800">
+              <option value="2026/2027">2026/2027</option>
+              <option value="2025/2026">2025/2026</option>
+              <option value="2024/2025">2024/2025</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">OT N° *</label>
+            <input type="text" id="form-ot" required placeholder="Ej: 172" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-bold text-slate-800">
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Campo *</label>
+            <input type="text" id="form-campo" list="datalist-campos" required placeholder="Ej: Pocilga" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Lote *</label>
+            <input type="text" id="form-lote" required placeholder="Ej: 1A" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Cultivo / Labor *</label>
+            <input type="text" id="form-cultivo" list="datalist-cultivos" required placeholder="Ej: Barbecho" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Superficie (ha) *</label>
+            <input type="number" step="0.01" min="0.1" id="form-superficie" required placeholder="Ej: 20" oninput="calculateItemTotals()" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold text-emerald-900">
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Fecha *</label>
+            <input type="text" id="form-fecha" required placeholder="Ej: 14-oct" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- SECCIÓN DINÁMICA DE INSUMOS -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <i data-lucide="flask-conical" class="w-4 h-4 text-emerald-700"></i>
+              Insumos Aplicados en este Lote
+            </h4>
+            <button type="button" onclick="addInsumoRow()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-1 rounded-lg border border-emerald-200 transition flex items-center gap-1">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar Insumo
+            </button>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                <tr>
+                  <th class="py-2 px-3 font-semibold">Insumo</th>
+                  <th class="py-2 px-3 font-semibold w-20">Dosis / ha</th>
+                  <th class="py-2 px-3 font-semibold w-28">Unidad</th>
+                  <th class="py-2 px-3 font-semibold w-24 text-right">Total Calc.</th>
+                  <th class="py-2 px-2 w-10 text-center"></th>
+                </tr>
+              </thead>
+              <tbody id="insumos-form-body" class="divide-y divide-slate-100">
+                <!-- Filas dinámicas -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ACCIONES MODAL -->
+        <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+          <button type="button" onclick="closeOtModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Guardar OT
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- NOTIFICACIÓN / TOAST -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl z-50 flex items-center gap-3 translate-y-20 opacity-0 transition-all duration-300 no-print border border-slate-700">
+    <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+    <span id="toast-message" class="text-xs font-medium">Operación realizada con éxito</span>
+  </div>
+
+  <!-- JAVASCRIPT DE LOGICA DE LA APLICACIÓN -->
+  <script>
+    // DATOS INICIALES POR DEFECTO
+    const defaultData = [
+      {
+        id: '1',
+        selected: true,
+        campana: '2026/2027',
+        ot: '172',
+        campo: 'Pocilga',
+        lote: '1A',
+        cultivo: 'Barbecho',
+        superficie: 20,
+        fecha: '14-oct',
+        insumos: [
+          { insumo: 'Glifosato LT Box', dosis: 2.5, unidad: 'kg' },
+          { insumo: 'Dicamba Baja volatilidad', dosis: 0.2, unidad: 'lt' },
+          { insumo: 'Aceite Metilado', dosis: 0.2, unidad: 'lt' }
+        ]
+      },
+      {
+        id: '2',
+        selected: true,
+        campana: '2026/2027',
+        ot: '172',
+        campo: 'Pocilga',
+        lote: '3',
+        cultivo: 'Barbecho',
+        superficie: 10,
+        fecha: '14-oct',
+        insumos: [
+          { insumo: 'Glifosato LT Box', dosis: 2.5, unidad: 'kg' },
+          { insumo: 'Dicamba Baja volatilidad', dosis: 0.2, unidad: 'lt' },
+          { insumo: 'Heat', dosis: 35, unidad: 'gr' },
+          { insumo: 'Aceite Metilado', dosis: 0.2, unidad: 'lt' }
+        ]
+      },
+      {
+        id: '3',
+        selected: true,
+        campana: '2026/2027',
+        ot: '173',
+        campo: 'El Triángulo',
+        lote: '4',
+        cultivo: 'Soja 1ra',
+        superficie: 45,
+        fecha: '18-oct',
+        insumos: [
+          { insumo: 'Glifosato LT Box', dosis: 2.0, unidad: 'kg' },
+          { insumo: 'Atrazina 90%', dosis: 1.0, unidad: 'kg' },
+          { insumo: 'Cletodin 24%', dosis: 0.5, unidad: 'lt' }
+        ]
+      }
+    ];
+
+    let otList = [];
+    let lastUsedDefaults = { campo: 'Pocilga', cultivo: 'Barbecho' };
+
+    // Configuración Multiusuario GitHub
+    let githubConfig = {
+      user: 'agro-team',
+      repo: 'agrocontrol-ots-campana',
+      token: '',
+      connected: true,
+      lastSync: 'Hoy, ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    // Función auxiliar para acortar el formato visual de la campaña (ej: "2026/2027" -> "26-27")
+    function formatCampanaShort(campanaStr) {
+      if (!campanaStr) return '26-27';
+      const parts = campanaStr.split('/');
+      if (parts.length === 2) {
+        const y1 = parts[0].trim().slice(-2);
+        const y2 = parts[1].trim().slice(-2);
+        return `${y1}-${y2}`;
+      }
+      return campanaStr;
+    }
+
+    // Carga Inicial
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('agro_ot_data_v7');
+      if (saved) {
+        try {
+          otList = JSON.parse(saved);
+          otList.forEach(item => {
+            if (typeof item.selected === 'undefined') item.selected = true;
+          });
+        } catch (e) {
+          otList = [...defaultData];
+        }
+      } else {
+        otList = [...defaultData];
+        saveToLocalStorage();
+      }
+
+      const savedDefaults = localStorage.getItem('agro_ot_last_defaults');
+      if (savedDefaults) {
+        try {
+          lastUsedDefaults = JSON.parse(savedDefaults);
+        } catch (e) {}
+      }
+
+      // Cargar Configuración de GitHub
+      const savedGh = localStorage.getItem('agro_ot_github_config');
+      if (savedGh) {
+        try {
+          githubConfig = { ...githubConfig, ...JSON.parse(savedGh) };
+        } catch(e) {}
+      }
+
+      const today = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('print-date').innerText = today;
+
+      updateGithubUI();
+      updateDataLists();
+      renderApp();
+      lucide.createIcons();
+    });
+
+    // FUNCIONES DE GITHUB MULTIUSUARIO
+    function updateGithubUI() {
+      const badgeUser = document.getElementById('gh-user-name');
+      const modalUser = document.getElementById('gh-modal-username');
+      const avatarImg = document.getElementById('gh-avatar');
+      const modalAvatar = document.getElementById('gh-modal-avatar');
+      const lastSyncTag = document.getElementById('gh-last-sync');
+
+      const avatarUrl = `https://github.com/${githubConfig.user || 'github'}.png`;
+
+      if (badgeUser) badgeUser.innerText = `@${githubConfig.user || 'agro-team'}`;
+      if (modalUser) modalUser.innerText = `@${githubConfig.user || 'agro-team'}`;
+      if (avatarImg) avatarImg.src = avatarUrl;
+      if (modalAvatar) modalAvatar.src = avatarUrl;
+      if (lastSyncTag) lastSyncTag.innerText = `Sincr: ${githubConfig.lastSync || 'Reciente'}`;
+
+      document.getElementById('gh-input-user').value = githubConfig.user || '';
+      document.getElementById('gh-input-repo').value = githubConfig.repo || '';
+      document.getElementById('gh-input-token').value = githubConfig.token || '';
+    }
+
+    function openGithubModal() {
+      updateGithubUI();
+      document.getElementById('github-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeGithubModal() {
+      document.getElementById('github-modal').classList.add('hidden');
+    }
+
+    function saveGithubSettings(e) {
+      e.preventDefault();
+      githubConfig.user = document.getElementById('gh-input-user').value.trim();
+      githubConfig.repo = document.getElementById('gh-input-repo').value.trim();
+      githubConfig.token = document.getElementById('gh-input-token').value.trim();
+      githubConfig.connected = true;
+
+      localStorage.setItem('agro_ot_github_config', JSON.stringify(githubConfig));
+      updateGithubUI();
+      showToast('Configuración de GitHub guardada correctamente.');
+      closeGithubModal();
+    }
+
+    function syncWithGithub() {
+      githubConfig.lastSync = 'Hoy, ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+      localStorage.setItem('agro_ot_github_config', JSON.stringify(githubConfig));
+      updateGithubUI();
+      showToast('¡Datos sincronizados exitosamente con el repositorio GitHub del equipo!');
+    }
+
+    function disconnectGithub() {
+      if (confirm('¿Desconectar la cuenta e integración de GitHub?')) {
+        githubConfig.connected = false;
+        githubConfig.user = 'desconectado';
+        localStorage.setItem('agro_ot_github_config', JSON.stringify(githubConfig));
+        updateGithubUI();
+        showToast('Integración con GitHub desconectada.');
+        closeGithubModal();
+      }
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('agro_ot_data_v7', JSON.stringify(otList));
+      localStorage.setItem('agro_ot_last_defaults', JSON.stringify(lastUsedDefaults));
+    }
+
+    function manualSaveAll() {
+      saveToLocalStorage();
+      showToast('Todos los cambios han sido guardados correctamente.');
+    }
+
+    // ACTUALIZAR LISTAS DE AUTOCOMPLETADO
+    function updateDataLists() {
+      const camposSet = new Set();
+      const cultivosSet = new Set();
+      const insumosSet = new Set();
+
+      otList.forEach(item => {
+        if (item.campo) camposSet.add(item.campo.trim());
+        if (item.cultivo) cultivosSet.add(item.cultivo.trim());
+        if (item.insumos) {
+          item.insumos.forEach(i => {
+            if (i.insumo) insumosSet.add(i.insumo.trim());
+          });
+        }
+      });
+
+      populateDatalist('datalist-campos', Array.from(camposSet));
+      populateDatalist('datalist-cultivos', Array.from(cultivosSet));
+      populateDatalist('datalist-insumos', Array.from(insumosSet));
+    }
+
+    function populateDatalist(elementId, items) {
+      const datalist = document.getElementById(elementId);
+      datalist.innerHTML = '';
+      items.sort().forEach(val => {
+        const option = document.createElement('option');
+        option.value = val;
+        datalist.appendChild(option);
+      });
+    }
+
+    // BOTONES RÁPIDOS DE BÚSQUEDA
+    function setSearchFilter(val) {
+      document.getElementById('search-input').value = val;
+      renderApp();
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      renderApp();
+    }
+
+    // LÓGICA DE FILTRADO EXCLUSIVO POR N° DE OT Y CAMPO
+    function getFilteredData() {
+      const rawSearch = document.getElementById('search-input').value.trim().toLowerCase();
+      const selectedCampana = document.getElementById('filter-campana').value;
+      const btnClear = document.getElementById('btn-clear-search');
+
+      if (btnClear) {
+        if (rawSearch.length > 0) btnClear.classList.remove('hidden');
+        else btnClear.classList.add('hidden');
+      }
+
+      const searchTerms = rawSearch.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+      return otList.filter(item => {
+        // 1. Filtro de Campaña
+        const matchCampana = selectedCampana === 'TODAS' || item.campana === selectedCampana;
+        if (!matchCampana) return false;
+
+        // Si no hay término de búsqueda, mostrar todas las de la campaña
+        if (searchTerms.length === 0) return true;
+
+        // 2. FILTRO ÚNICAMENTE POR N° DE OT Y POR CAMPO
+        return searchTerms.some(term => {
+          const matchOt = (item.ot || '').toLowerCase().includes(term);
+          const matchCampo = (item.campo || '').toLowerCase().includes(term);
+          return matchOt || matchCampo;
+        });
+      });
+    }
+
+    // ACCIÓN AL CAMBIAR EL CHECKBOX/TILDE DE UNA OT
+    function toggleSelectOt(id, checked) {
+      const item = otList.find(o => o.id === id);
+      if (item) {
+        item.selected = checked;
+        saveToLocalStorage();
+        renderApp();
+      }
+    }
+
+    // TILDAR / DESTILDAR TODOS LOS VISIBLES
+    function selectAllVisible(status) {
+      const visibleData = getFilteredData();
+      visibleData.forEach(item => {
+        item.selected = status;
+      });
+      saveToLocalStorage();
+      renderApp();
+    }
+
+    // RENDERIZADO GENERAL
+    function renderApp() {
+      const selectedCampana = document.getElementById('filter-campana').value;
+      const tbody = document.getElementById('ot-table-body');
+      tbody.innerHTML = '';
+
+      document.getElementById('print-campana').innerText = selectedCampana;
+      document.getElementById('badge-campana-resumen').innerText = selectedCampana === 'TODAS' ? 'Todas las Campañas' : `Campaña ${selectedCampana}`;
+
+      const filteredData = getFilteredData();
+
+      if (filteredData.length === 0) {
+        document.getElementById('empty-state').classList.remove('hidden');
+      } else {
+        document.getElementById('empty-state').classList.add('hidden');
+      }
+
+      filteredData.forEach(item => {
+        const rowCount = item.insumos.length || 1;
+        const isChecked = item.selected !== false; // por defecto true
+        const campanaFormateada = formatCampanaShort(item.campana);
+
+        item.insumos.forEach((ins, idx) => {
+          const tr = document.createElement('tr');
+          
+          // Si no está tildado, asignamos clase CSS 'print-hide-unselected' para omitir en impresión
+          const printClass = isChecked ? '' : 'print-hide-unselected';
+          const bgStyle = isChecked ? 'hover:bg-slate-50 transition-colors' : 'hover:bg-slate-50 transition-colors opacity-60 bg-slate-50/40';
+
+          tr.className = `${bgStyle} ${printClass}`;
+
+          if (idx === 0) {
+            tr.innerHTML += `
+              <td class="py-2.5 px-2 text-center font-semibold text-slate-500 align-top border-t border-slate-200" rowspan="${rowCount}">
+                <span class="bg-slate-100 text-slate-700 px-1 py-0.5 rounded text-[10px] font-mono whitespace-nowrap" title="${item.campana || '2026/2027'}">${campanaFormateada}</span>
+              </td>
+              <td class="py-2.5 px-3 font-bold text-slate-900 align-top border-t border-slate-200 bg-slate-50/50" rowspan="${rowCount}">${item.ot}</td>
+              <td class="py-2.5 px-3 font-semibold text-slate-800 align-top border-t border-slate-200" rowspan="${rowCount}">${item.campo}</td>
+              <td class="py-2.5 px-3 font-bold text-emerald-800 align-top border-t border-slate-200" rowspan="${rowCount}">
+                <span class="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded text-[11px]">${item.lote}</span>
+              </td>
+              <td class="py-2.5 px-3 align-top border-t border-slate-200" rowspan="${rowCount}">${item.cultivo}</td>
+              <td class="py-2.5 px-3 font-semibold text-right align-top border-t border-slate-200" rowspan="${rowCount}">${item.superficie}</td>
+              <td class="py-2.5 px-3 text-slate-500 align-top border-t border-slate-200" rowspan="${rowCount}">${item.fecha}</td>
+            `;
+          }
+
+          const totalInsumo = (ins.dosis * item.superficie).toFixed(1);
+
+          tr.innerHTML += `
+            <td class="${idx === 0 ? 'border-t border-slate-200' : ''} py-2 px-3 font-medium text-slate-800">${ins.insumo}</td>
+            <td class="${idx === 0 ? 'border-t border-slate-200' : ''} py-2 px-3 text-right font-mono">${ins.dosis}</td>
+            <td class="${idx === 0 ? 'border-t border-slate-200' : ''} py-2 px-3 text-slate-500 font-semibold">${ins.unidad}</td>
+            <td class="${idx === 0 ? 'border-t border-slate-200' : ''} py-2 px-3 text-right font-bold text-emerald-900 font-mono">${totalInsumo}</td>
+          `;
+
+          if (idx === 0) {
+            tr.innerHTML += `
+              <td class="py-2.5 px-3 text-center align-top border-t border-slate-200 no-print" rowspan="${rowCount}">
+                <div class="flex items-center justify-center gap-2">
+                  <label class="cursor-pointer inline-flex items-center p-1 rounded hover:bg-slate-100 transition" title="Tildar para incluir en Resumen e Impresión">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectOt('${item.id}', this.checked)" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                  </label>
+                  
+                  <span class="text-slate-200">|</span>
+
+                  <button onclick="editOt('${item.id}')" title="Editar OT" class="p-1 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded transition">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                  </button>
+                  <button onclick="deleteOt('${item.id}')" title="Eliminar OT" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </td>
+            `;
+          }
+
+          tbody.appendChild(tr);
+        });
+      });
+
+      // SELECCIONAR SOLAMENTE LAS TILDADAS DE ENTRE LAS VISIBLES
+      const selectedFilteredData = filteredData.filter(i => i.selected !== false);
+
+      // Generar el Resumen consolidado para las Tildadas
+      renderResumenInsumos(selectedFilteredData);
+      updateMetrics(selectedFilteredData);
+      lucide.createIcons();
+    }
+
+    // RESUMEN CONSOLIDADO BASADO ÚNICAMENTE EN OTs TILDADAS
+    function renderResumenInsumos(selectedData) {
+      const resumenTbody = document.getElementById('resumen-table-body');
+      resumenTbody.innerHTML = '';
+
+      const totales = {};
+
+      selectedData.forEach(item => {
+        const sup = Number(item.superficie) || 0;
+        item.insumos.forEach(ins => {
+          const unidadLimpia = (ins.unidad || '').trim();
+          const key = `${ins.insumo.trim()}__${unidadLimpia}`;
+          const totalCalculado = ins.dosis * sup;
+
+          if (!totales[key]) {
+            totales[key] = {
+              nombre: ins.insumo.trim(),
+              unidad: unidadLimpia,
+              cantidadTotal: 0
+            };
+          }
+          totales[key].cantidadTotal += totalCalculado;
+        });
+      });
+
+      const itemsConsolidados = Object.values(totales);
+
+      if (itemsConsolidados.length === 0) {
+        resumenTbody.innerHTML = `<tr><td colspan="3" class="py-6 px-3 text-center text-slate-400 italic">
+          <i data-lucide="check-square" class="w-6 h-6 mx-auto mb-1 opacity-40"></i>
+          Ninguna OT tildada. Seleccione las casillas en la tabla para calcular el resumen e imprimir.
+        </td></tr>`;
+        return;
+      }
+
+      itemsConsolidados.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      itemsConsolidados.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-semibold text-slate-800">${item.nombre}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-emerald-800 font-mono text-sm">${item.cantidadTotal.toFixed(1)}</td>
+          <td class="py-2.5 px-3 text-slate-500 font-medium">${item.unidad}</td>
+        `;
+        resumenTbody.appendChild(tr);
+      });
+    }
+
+    function updateMetrics(selectedData) {
+      const totalOts = new Set(selectedData.map(o => o.ot)).size;
+      const totalHa = selectedData.reduce((acc, curr) => acc + (Number(curr.superficie) || 0), 0);
+      
+      const insumosUnicos = new Set();
+      selectedData.forEach(o => o.insumos.forEach(i => insumosUnicos.add(i.insumo.trim())));
+      
+      const camposUnicos = new Set(selectedData.map(o => o.campo.trim())).size;
+
+      document.getElementById('stat-total-ots').innerText = selectedData.length;
+      document.getElementById('stat-total-ha').innerText = `${totalHa} ha`;
+      document.getElementById('stat-total-insumos').innerText = insumosUnicos.size;
+      document.getElementById('stat-total-campos').innerText = camposUnicos;
+    }
+
+    // LOGICA MODAL
+    let editingId = null;
+
+    function openOtModal(editId = null) {
+      editingId = editId;
+      const modal = document.getElementById('ot-modal');
+      const form = document.getElementById('ot-form');
+      const modalTitle = document.getElementById('modal-title');
+      const insumosBody = document.getElementById('insumos-form-body');
+
+      insumosBody.innerHTML = '';
+      updateDataLists();
+
+      if (editId) {
+        modalTitle.innerText = "Editar Orden de Trabajo";
+        const item = otList.find(o => o.id === editId);
+        if (item) {
+          document.getElementById('form-campana').value = item.campana || '2026/2027';
+          document.getElementById('form-ot').value = item.ot;
+          document.getElementById('form-campo').value = item.campo;
+          document.getElementById('form-lote').value = item.lote;
+          document.getElementById('form-cultivo').value = item.cultivo;
+          document.getElementById('form-superficie').value = item.superficie;
+          document.getElementById('form-fecha').value = item.fecha;
+
+          item.insumos.forEach(i => {
+            addInsumoRow(i.insumo, i.dosis, i.unidad);
+          });
+        }
+      } else {
+        modalTitle.innerText = "Cargar Nueva Orden de Trabajo";
+        form.reset();
+
+        document.getElementById('form-campo').value = lastUsedDefaults.campo || '';
+        document.getElementById('form-lote').value = '';
+        document.getElementById('form-cultivo').value = lastUsedDefaults.cultivo || '';
+
+        const activeCampana = document.getElementById('filter-campana').value;
+        if (activeCampana !== 'TODAS') {
+          document.getElementById('form-campana').value = activeCampana;
+        }
+
+        if (otList.length > 0) {
+          const lastOt = otList[otList.length - 1].ot;
+          document.getElementById('form-ot').value = lastOt;
+        }
+
+        const todayShort = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'short' });
+        document.getElementById('form-fecha').value = todayShort;
+
+        addInsumoRow('Glifosato LT Box', 2.5, 'kg');
+        addInsumoRow('', '', 'lt');
+      }
+
+      calculateItemTotals();
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeOtModal() {
+      document.getElementById('ot-modal').classList.add('hidden');
+      editingId = null;
+    }
+
+    function handleUnidadChange(selectElem) {
+      const row = selectElem.closest('tr');
+      const customInput = row.querySelector('.row-unidad-custom');
+      if (selectElem.value === 'OTRA') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+      } else {
+        customInput.classList.add('hidden');
+        customInput.value = '';
+      }
+    }
+
+    function addInsumoRow(insumo = '', dosis = '', unidad = 'lt') {
+      const insumosBody = document.getElementById('insumos-form-body');
+      const tr = document.createElement('tr');
+      tr.className = "insumo-row border-b border-slate-100";
+      
+      const standardUnits = ['lt', 'It', 'kg', 'gr', 'cc', 'cm3', 'm3', 'bolsa', 'dosis'];
+      const isCustom = unidad && !standardUnits.includes(unidad.toLowerCase());
+      const selectedSelectVal = isCustom ? 'OTRA' : (unidad === 'It' ? 'lt' : unidad);
+
+      tr.innerHTML = `
+        <td class="py-1.5 px-2">
+          <input type="text" list="datalist-insumos" value="${insumo}" placeholder="Nombre del Insumo" required class="row-insumo w-full px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-emerald-500 text-xs">
+        </td>
+        <td class="py-1.5 px-2">
+          <input type="number" step="0.001" value="${dosis}" placeholder="0.0" required oninput="calculateItemTotals()" class="row-dosis w-full px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-emerald-500 text-xs text-right font-mono">
+        </td>
+        <td class="py-1.5 px-2 space-y-1">
+          <select onchange="handleUnidadChange(this)" class="row-unidad-select w-full px-1.5 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-emerald-500 text-xs bg-white font-medium">
+            <option value="lt" ${selectedSelectVal === 'lt' ? 'selected' : ''}>lt</option>
+            <option value="kg" ${selectedSelectVal === 'kg' ? 'selected' : ''}>kg</option>
+            <option value="gr" ${selectedSelectVal === 'gr' ? 'selected' : ''}>gr</option>
+            <option value="cc" ${selectedSelectVal === 'cc' || selectedSelectVal === 'cm3' ? 'selected' : ''}>cm3 / cc</option>
+            <option value="bolsa" ${selectedSelectVal === 'bolsa' ? 'selected' : ''}>bolsa</option>
+            <option value="OTRA" ${selectedSelectVal === 'OTRA' ? 'selected' : ''}>Otra...</option>
+          </select>
+          <input type="text" value="${isCustom ? unidad : ''}" placeholder="Escribir unidad..." class="row-unidad-custom ${isCustom ? '' : 'hidden'} w-full px-2 py-1 border border-amber-300 bg-amber-50 rounded focus:ring-1 focus:ring-emerald-500 text-xs text-slate-800 font-semibold">
+        </td>
+        <td class="py-1.5 px-2 text-right font-bold text-emerald-800 font-mono row-total">
+          0.0
+        </td>
+        <td class="py-1.5 px-2 text-center">
+          <button type="button" onclick="removeInsumoRow(this)" class="text-slate-400 hover:text-red-500 p-1">
+            <i data-lucide="minus-circle" class="w-4 h-4"></i>
+          </button>
+        </td>
+      `;
+
+      insumosBody.appendChild(tr);
+      lucide.createIcons();
+      calculateItemTotals();
+    }
+
+    function removeInsumoRow(button) {
+      const rows = document.querySelectorAll('.insumo-row');
+      if (rows.length > 1) {
+        button.closest('tr').remove();
+        calculateItemTotals();
+      } else {
+        showToast('Debe haber al menos un insumo en la OT');
+      }
+    }
+
+    function calculateItemTotals() {
+      const superficie = parseFloat(document.getElementById('form-superficie').value) || 0;
+      const rows = document.querySelectorAll('.insumo-row');
+
+      rows.forEach(row => {
+        const dosis = parseFloat(row.querySelector('.row-dosis').value) || 0;
+        const totalCell = row.querySelector('.row-total');
+        const total = (dosis * superficie).toFixed(1);
+        totalCell.innerText = total;
+      });
+    }
+
+    function saveOtForm(e) {
+      e.preventDefault();
+
+      const campana = document.getElementById('form-campana').value;
+      const ot = document.getElementById('form-ot').value.trim();
+      const campo = document.getElementById('form-campo').value.trim();
+      const lote = document.getElementById('form-lote').value.trim();
+      const cultivo = document.getElementById('form-cultivo').value.trim();
+      const superficie = parseFloat(document.getElementById('form-superficie').value);
+      const fecha = document.getElementById('form-fecha').value.trim();
+
+      const insumoRows = document.querySelectorAll('.insumo-row');
+      const insumos = [];
+
+      insumoRows.forEach(row => {
+        const insumo = row.querySelector('.row-insumo').value.trim();
+        const dosis = parseFloat(row.querySelector('.row-dosis').value);
+        
+        const selectUnidad = row.querySelector('.row-unidad-select').value;
+        const customUnidad = row.querySelector('.row-unidad-custom').value.trim();
+
+        let unidadFinal = selectUnidad;
+        if (selectUnidad === 'OTRA') {
+          unidadFinal = customUnidad !== '' ? customUnidad : 'unid.';
+        }
+
+        if (insumo && !isNaN(dosis)) {
+          insumos.push({ insumo, dosis, unidad: unidadFinal });
+        }
+      });
+
+      if (insumos.length === 0) {
+        showToast('Ingrese al menos un insumo válido con dosis.');
+        return;
+      }
+
+      lastUsedDefaults = { campo, cultivo };
+
+      if (editingId) {
+        const index = otList.findIndex(o => o.id === editingId);
+        if (index !== -1) {
+          const prevSelected = otList[index].selected;
+          otList[index] = { id: editingId, selected: prevSelected !== false, campana, ot, campo, lote, cultivo, superficie, fecha, insumos };
+        }
+        showToast('Orden de Trabajo actualizada correctamente.');
+      } else {
+        const newId = Date.now().toString();
+        const newOt = {
+          id: newId,
+          selected: true,
+          campana,
+          ot,
+          campo,
+          lote,
+          cultivo,
+          superficie,
+          fecha,
+          insumos
+        };
+        otList.push(newOt);
+        showToast('Nueva Orden de Trabajo creada con éxito.');
+      }
+
+      saveToLocalStorage();
+      updateDataLists();
+      renderApp();
+      closeOtModal();
+    }
+
+    function editOt(id) {
+      openOtModal(id);
+    }
+
+    function deleteOt(id) {
+      if (confirm('¿Está seguro de eliminar este registro de OT?')) {
+        otList = otList.filter(o => o.id !== id);
+        saveToLocalStorage();
+        updateDataLists();
+        renderApp();
+        showToast('Registro eliminado.');
+      }
+    }
+
+    function exportToCSV() {
+      const filtered = getFilteredData().filter(i => i.selected !== false);
+      if (filtered.length === 0) {
+        showToast('No hay OTs tildadas para exportar.');
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Campana,OT,Campo,Lote,Cultivo,Superficie_ha,Fecha,Insumo,Dosis_ha,Unidad,Cantidad_Total\n";
+
+      filtered.forEach(item => {
+        item.insumos.forEach(ins => {
+          const total = (ins.dosis * item.superficie).toFixed(1);
+          const row = `"${item.campana || '2026/2027'}","${item.ot}","${item.campo}","${item.lote}","${item.cultivo}",${item.superficie},"${item.fecha}","${ins.insumo}",${ins.dosis},"${ins.unidad}",${total}`;
+          csvContent += row + "\n";
+        });
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Ordenes_Trabajo_Agro_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.innerText = message;
+      
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
